@@ -1,0 +1,87 @@
+.run/
+*.log
+*.out
+*.err
+*.pid
+*.seed
+*.stackdump
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+
+# Frontend
+web/node_modules/
+web/dist/
+web/.vite/
+web/.cache/
+
+# Java / Maven / Spring Boot
+SOFT-rear/target/
+SOFT-rear/.mvn/wrapper/maven-wrapper.jar
+*.class
+
+# Backend runtime uploads / temp files
+SOFT-rear/upload/
+SOFT-rear/logs/
+SOFT-rear/tmp/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.nox/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+services/yolo-http/.venv/
+services/mmdet3d/.venv/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Service temporary outputs
+services/mmdet3d/tmp/
+services/mmdet3d/outputs/
+services/mmdet3d/outputs_show_test/
+services/mmdet3d/demo_outputs/
+services/mmdet3d/demo_outputs_cuda/
+services/mmdet3d/third_party/**/.git/
+services/mmdet3d/**/__pycache__/
+services/yolo-http/**/__pycache__/
+
+# Local config / secrets
+.env
+.env.*
+*.local
+
+# Optional local data and model artifacts
+services/mmdet3d/pkl/
+services/mmdet3d/data/kitti/
+services/mmdet3d/data/*.pkl
+services/mmdet3d/**/*.pkl
+services/mmdet3d/**/*.pth
+services/yolo-http/**/*.pt

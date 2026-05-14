@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <localRepository>E:/BD/MAVEN/毕设/M2E4AB~1/repository</localRepository>
+  <mirrors>
+    <mirror>
+      <id>shienroxic-local-m2</id>
+      <mirrorOf>*</mirrorOf>
+      <url>file:///C:/Users/Shienroxic/.m2/repository</url>
+    </mirror>
+  </mirrors>
+</settings>
