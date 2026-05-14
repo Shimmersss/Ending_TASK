@@ -128,6 +128,28 @@ cd .\SOFT-rear
 mvn -DskipTests package
 ```
 
+后端的本地敏感配置现在推荐通过环境变量提供，不再把真实数据库密码或 Dify Key 直接写进仓库文件。
+
+如果你使用根目录的一键脚本，推荐先复制根目录的 `.env.local.example` 为 `.env.local`，再按本机环境修改：
+
+```powershell
+Copy-Item .\.env.local.example .\.env.local
+```
+
+`.env.local.example` 示例内容如下：
+
+```dotenv
+DB_USERNAME=root
+DB_PASSWORD=你的数据库密码
+DIFY_BASE_URL=http://localhost/v1
+DIFY_API_KEY=你的DifyKey
+DIFY_WORKFLOW_ID=你的WorkflowId
+DIFY_WORKFLOW_USER_PREFIX=drone-demo
+KITTI_DATASET_ROOT=F:/YOLO/kitty
+```
+
+`start-all.ps1` 会自动读取这个文件并把变量注入当前启动流程。
+
 #### YOLO 服务
 
 ```powershell
@@ -157,6 +179,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\start-all.ps1
 - 启动 YOLO FastAPI 服务
 - 启动 MMDet3D FastAPI 服务
 - 检查四个服务是否成功监听并可访问
+- 如果存在根目录 `.env.local`，自动加载其中的本地环境变量
 
 ## 停止服务
 
@@ -184,6 +207,17 @@ npm run dev -- --host
 ```powershell
 cd .\SOFT-rear
 mvn spring-boot:run
+```
+
+如果你不是通过 `start-all.ps1` 启动，而是手动启动后端，请先在当前 PowerShell 会话中设置需要的环境变量，例如：
+
+```powershell
+$env:DB_USERNAME="root"
+$env:DB_PASSWORD="你的数据库密码"
+$env:DIFY_API_KEY="你的DifyKey"
+$env:DIFY_WORKFLOW_ID="你的WorkflowId"
+$env:DIFY_WORKFLOW_USER_PREFIX="drone-demo"
+$env:KITTI_DATASET_ROOT="F:/YOLO/kitty"
 ```
 
 ### YOLO 服务
@@ -252,7 +286,8 @@ GET http://127.0.0.1:8000/health
 ## 注意事项
 
 - `start-all.ps1` 当前包含明显的本机路径假设，例如 JDK、Maven、KITTI 数据目录等；如果换机器运行，需要先调整脚本中的路径候选项。
-- `SOFT-rear/src/main/resources/application-local.properties` 适合放本机私有配置，不建议保存真实密钥或密码到公共仓库。
+- `SOFT-rear/src/main/resources/application-local.properties` 已改成优先读取环境变量；推荐把真实本机配置写入根目录 `.env.local`，并且不要提交到公共仓库。
+- 仓库中的 `.env.local.example` 用于分发配置模板；实际运行请复制为 `.env.local` 后再填写你自己的本机值。
 - `services/mmdet3d/third_party/mmdetection3d` 体积较大，若后续需要精简仓库，建议改为子模块或外部依赖管理。
 
 ## 推荐开发流程

@@ -76,6 +76,7 @@ services/yolo-http/**/__pycache__/
 # Local config / secrets
 .env
 .env.*
+.env.local
 *.local
 
 # Optional local data and model artifacts

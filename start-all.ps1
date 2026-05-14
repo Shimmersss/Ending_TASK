@@ -12,6 +12,7 @@ $yoloDir = Join-Path $root 'services\yolo-http'
 $mmdet3dDir = Join-Path $root 'services\mmdet3d'
 $runDir = Join-Path $root '.run'
 $metaFile = Join-Path $runDir 'dev-processes.json'
+$envFile = Join-Path $root '.env.local'
 
 $jdkCandidates = @(
   'E:\BD\IntelliJ IDEA 2023.3.4\jbr',
@@ -50,6 +51,42 @@ if (!(Test-Path $mavenSettings)) { throw "Maven settings not found: $mavenSettin
 
 if ($TimeoutSec -lt 5) { $TimeoutSec = 5 }
 if ($PollIntervalMs -lt 200) { $PollIntervalMs = 200 }
+
+function Import-EnvFile {
+  param([string]$Path)
+
+  if (!(Test-Path $Path)) {
+    return
+  }
+
+  Get-Content $Path | ForEach-Object {
+    $line = $_.Trim()
+    if (-not $line -or $line.StartsWith('#')) {
+      return
+    }
+
+    $separatorIndex = $line.IndexOf('=')
+    if ($separatorIndex -lt 1) {
+      return
+    }
+
+    $name = $line.Substring(0, $separatorIndex).Trim()
+    $value = $line.Substring($separatorIndex + 1).Trim()
+
+    if (
+      ($value.StartsWith('"') -and $value.EndsWith('"')) -or
+      ($value.StartsWith("'") -and $value.EndsWith("'"))
+    ) {
+      $value = $value.Substring(1, $value.Length - 2)
+    }
+
+    [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+  }
+
+  Write-Host "Loaded local environment variables from: $Path"
+}
+
+Import-EnvFile -Path $envFile
 
 New-Item -Path $runDir -ItemType Directory -Force | Out-Null
 
