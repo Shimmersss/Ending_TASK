@@ -6,8 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$backendDir = Join-Path $root 'SOFT-rear'
-$frontendDir = Join-Path $root 'web'
+$backendDir = Join-Path $root 'backend'
+$frontendDir = Join-Path $root 'frontend'
 $yoloDir = Join-Path $root 'services\yolo-http'
 $mmdet3dDir = Join-Path $root 'services\mmdet3d'
 $runDir = Join-Path $root '.run'

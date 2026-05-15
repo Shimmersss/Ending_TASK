@@ -87,6 +87,33 @@ def _decode_base64_image(image_base64: str) -> bytes:
         raise HTTPException(status_code=400, detail=f"Invalid base64 image payload: {exc}") from exc
 
 
+def _resolve_class_name(names: Any, class_id: Any) -> str:
+    try:
+        idx = int(class_id)
+    except Exception:
+        return str(class_id)
+
+    if isinstance(names, dict):
+        return str(names.get(idx, idx))
+    if isinstance(names, list) and 0 <= idx < len(names):
+        return str(names[idx])
+    return str(idx)
+
+
+def _attach_class_names(detections: Any, names: Any) -> list[dict[str, Any]]:
+    if not isinstance(detections, list):
+        return []
+
+    enriched: list[dict[str, Any]] = []
+    for item in detections:
+        if isinstance(item, dict):
+            record = dict(item)
+            class_id = record.get("class", record.get("label"))
+            record["class_name"] = _resolve_class_name(names, class_id)
+            enriched.append(record)
+    return enriched
+
+
 def _infer(image: np.ndarray, conf: float, iou: float) -> dict[str, Any]:
     results = MODEL.predict(source=image, conf=conf, iou=iou, verbose=False)
     result = results[0]
@@ -98,7 +125,7 @@ def _infer(image: np.ndarray, conf: float, iou: float) -> dict[str, Any]:
     annotated_image_base64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
     return {
         "model": MODEL_PATH,
-        "detections": result.summary(normalize=False),
+        "detections": _attach_class_names(result.summary(normalize=False), result.names),
         "annotated_image": f"data:image/png;base64,{annotated_image_base64}",
     }
 
