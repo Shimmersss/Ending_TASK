@@ -1,4 +1,10 @@
-# Ending_TASK
+# DroneInspect-AI
+
+> 无人机巡检检测与 AI 决策平台 / AI-powered drone inspection platform
+
+[中文](#中文) | [English](#english)
+
+## 中文
 
 一个集成了 Vue 3 前端、Spring Boot 后端、YOLO 图像检测服务和 MMDet3D 点云检测服务的多模块项目。
 
@@ -305,3 +311,34 @@ GET http://127.0.0.1:8000/health
 3. 执行 `start-all.ps1`
 4. 打开 `http://127.0.0.1:3000`
 5. 如果启动失败，优先查看 `.run/` 下对应日志
+
+## English
+
+An AI-powered drone inspection platform that combines a Vue 3 frontend, a Spring Boot backend, YOLO image detection, and MMDet3D point-cloud inference in one workflow.
+
+It is designed for local integration and ships with one-click start, stop, and status scripts for a Windows + PowerShell setup.
+
+### Project Structure
+
+```text
+Ending_TASK/
+├─ backend/                   Spring Boot backend
+├─ frontend/                  Vue 3 + Vite frontend
+├─ services/
+│  ├─ yolo-http/              YOLO FastAPI service
+│  └─ mmdet3d/                MMDet3D FastAPI service
+├─ .run/                      runtime logs and process metadata
+├─ start-all.ps1              start all services
+├─ stop-all.ps1               stop all services
+├─ status-all.ps1             check service status
+├─ README.md
+└─ .gitignore
+```
+
+### Quick Start
+
+1. Make sure MySQL, Python, Node.js, and JDK are available.
+2. Verify model files and dataset paths.
+3. Run `start-all.ps1`.
+4. Open `http://127.0.0.1:3000`.
+5. Check `.run/` logs if startup fails.
