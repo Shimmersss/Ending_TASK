@@ -44,7 +44,8 @@ public class ExternalServiceController {
             @RequestParam(value = "iou", required = false) Double iou,
             @RequestParam(value = "scoreThr", required = false) Double scoreThr,
             @RequestParam(value = "missionContext", required = false) String missionContext,
-            @RequestParam(value = "droneId", required = false) String droneId) {
+            @RequestParam(value = "droneId", required = false) String droneId,
+            @RequestParam(value = "includeDify", required = false, defaultValue = "true") boolean includeDify) {
         try {
             return ResponseMessage.success(detectionPipelineService.run(
                     mediaType,
@@ -56,7 +57,8 @@ public class ExternalServiceController {
                     iou,
                     scoreThr,
                     missionContext,
-                    droneId
+                    droneId,
+                    includeDify
             ));
         } catch (IllegalArgumentException e) {
             return new ResponseMessage<>(400, e.getMessage(), null);

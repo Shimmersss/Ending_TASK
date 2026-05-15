@@ -76,10 +76,32 @@ public class DetectionPipelineService {
                                    Double scoreThr,
                                    String missionContext,
                                    String droneId) throws IOException {
+        return run(mediaType, file, imageFile, calibFile, imagePathHint, conf, iou, scoreThr, missionContext, droneId, true);
+    }
+
+    public DronePipelineResult run(String mediaType,
+                                   MultipartFile file,
+                                   MultipartFile imageFile,
+                                   MultipartFile calibFile,
+                                   String imagePathHint,
+                                   Double conf,
+                                   Double iou,
+                                   Double scoreThr,
+                                   String missionContext,
+                                   String droneId,
+                                   boolean includeDify) throws IOException {
         String normalizedType = normalizeMediaType(mediaType);
         Map<String, Object> detection = "pointcloud".equals(normalizedType)
                 ? callMmdet3d(file, imageFile, calibFile, imagePathHint, scoreThr)
                 : callYolo(file, conf, iou);
+
+        if (!includeDify) {
+            return new DronePipelineResult(
+                    "pointcloud".equals(normalizedType) ? "mmdet3d" : "yolo",
+                    detection,
+                    DifyDecisionResult.pending("Dify 已排队处理中，检测结果先返回")
+            );
+        }
 
         Map<String, Object> difyStatus = difyWorkflowService.probeStatus();
         DifyDecisionResult dify = Boolean.TRUE.equals(difyStatus.get("ready"))

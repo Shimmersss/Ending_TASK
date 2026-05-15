@@ -27,6 +27,13 @@ public class DifyDecisionResult {
         return result;
     }
 
+    public static DifyDecisionResult pending(String reason) {
+        DifyDecisionResult result = new DifyDecisionResult();
+        result.setStatus("pending");
+        result.setReason(reason);
+        return result;
+    }
+
     public String getWorkflowRunId() {
         return workflowRunId;
     }

@@ -45,7 +45,7 @@ export const uploadPointCloudWithImage = (pointCloudFile, imageFile, calibFile, 
   return mmdet3dApi.post('/predict', formData)
 }
 
-export const runDronePipeline = ({ mediaType, file, imageFile, calibFile, imagePathHint, conf, iou, scoreThr, missionContext, droneId }) => {
+export const runDronePipeline = ({ mediaType, file, imageFile, calibFile, imagePathHint, conf, iou, scoreThr, missionContext, droneId, includeDify = true }) => {
   const formData = new FormData()
   formData.append('mediaType', mediaType)
   formData.append('file', file)
@@ -69,6 +69,7 @@ export const runDronePipeline = ({ mediaType, file, imageFile, calibFile, imageP
   }
   formData.append('missionContext', missionContext || '')
   formData.append('droneId', droneId || 'demo-drone-001')
+  formData.append('includeDify', String(includeDify))
   return api.post('/external/dify/drone-pipeline', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'

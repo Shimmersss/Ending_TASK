@@ -86,6 +86,7 @@ const followUpMessages = ref([])
 
 const promptText = computed(() => {
   if (!summary.value) return '等待下一次检测结果。'
+  if (summary.value.dify?.status === 'pending') return '检测结果已返回，Dify 正在后台补充。'
   if (summary.value.dify?.status === 'failed') return 'Dify 调用失败，但检测结果仍然保留。'
   if (summary.value.dify?.validated === false) return '工作流已拒绝高风险动作。'
   return '可以基于当前结果继续追问巡检建议。'
@@ -108,6 +109,7 @@ const statusClass = computed(() => {
   const status = summary.value?.dify?.status
   return {
     ok: status === 'succeeded',
+    pending: status === 'pending',
     warn: status === 'failed',
     mute: !status || status === 'skipped'
   }
@@ -226,6 +228,10 @@ onUnmounted(() => {
 
 .summary-row strong.ok {
   color: #85ffe2;
+}
+
+.summary-row strong.pending {
+  color: #8ecbff;
 }
 
 .summary-row strong.warn {

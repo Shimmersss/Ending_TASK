@@ -177,6 +177,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { checkDifyStatus, checkMmdet3dHealth, checkYoloHealth, runDronePipeline } from '../api/image'
+import { chatWithDify } from '../api/model'
 import { setLatestPipelineResult } from '../utils/difyPipelineState'
 
 const mode = ref('yolo')
@@ -198,6 +199,7 @@ const viewerOpen = ref(false)
 const viewerSrc = ref('')
 const detections = ref([])
 const difyResult = ref(null)
+const difyTaskToken = ref(0)
 
 const mainFile = ref(null)
 const imageFile = ref(null)
@@ -366,6 +368,7 @@ const refreshServices = () => {
 
 const runDetection = async () => {
   if (!canRun.value) return
+  const token = ++difyTaskToken.value
   try {
     loading.value = true
     error.value = ''
@@ -385,7 +388,8 @@ const runDetection = async () => {
       iou: iou.value,
       scoreThr: scoreThr.value,
       missionContext: missionContext.value,
-      droneId: droneId.value
+      droneId: droneId.value,
+      includeDify: false
     })
 
     const data = response?.data || {}
@@ -396,12 +400,72 @@ const runDetection = async () => {
     serviceOnline.value = true
     hasResult.value = true
     setLatestPipelineResult(data)
+
+    void resolveDifyAsync({
+      token,
+      detection,
+      mediaType: isYolo.value ? 'image' : 'pointcloud'
+    })
   } catch (err) {
     const detail = err?.response?.data?.message || err?.response?.data?.detail
     error.value = detail || err.message || '检测失败，请确认后端、模型服务和 Dify 配置。'
   } finally {
     loading.value = false
   }
+}
+
+const resolveDifyAsync = async ({ token, detection, mediaType }) => {
+  try {
+    const response = await chatWithDify({
+      message: buildDifyPrompt(detection),
+      userId: droneId.value || 'demo-user',
+      droneId: droneId.value || 'demo-drone-001',
+      mediaType,
+      mediaUrl: shortMediaRef(detection),
+    })
+    if (token !== difyTaskToken.value) return
+    const dify = response?.data?.dify || null
+    if (!dify) return
+    difyResult.value = dify
+    setLatestPipelineResult({ mode: isYolo.value ? 'yolo' : 'mmdet3d', detection, dify })
+  } catch (err) {
+    if (token !== difyTaskToken.value) return
+    const message = err?.response?.data?.message || err?.message || 'Dify 异步调用失败'
+    difyResult.value = { status: 'failed', error: message }
+    setLatestPipelineResult({
+      mode: isYolo.value ? 'yolo' : 'mmdet3d',
+      detection,
+      dify: difyResult.value
+    })
+  }
+}
+
+const buildDifyPrompt = (detection) => {
+  const items = Array.isArray(detection.detections) ? detection.detections.slice(0, 5) : []
+  const lines = [
+    '请基于当前无人机巡检结果输出安全建议。',
+    `无人机ID：${droneId.value || 'demo-drone-001'}`,
+    `任务上下文：${missionContext.value || '-'}`,
+    `检测目标数：${Array.isArray(detection.detections) ? detection.detections.length : 0}`
+  ]
+  if (items.length) {
+    lines.push(
+      '目标摘要：' + items.map((item, index) => `${index + 1}. ${formatLabel(item, index)} ${formatPercent(item.score || item.confidence || item.conf)}`).join('；')
+    )
+  }
+  return lines.join('\n')
+}
+
+const shortMediaRef = (detection) => {
+  const candidate =
+    detection?.sample_id ||
+    detection?.source_id ||
+    detection?.image_name ||
+    detection?.annotated_image ||
+    detection?.image_visualization ||
+    detection?.pointcloud_visualization ||
+    'local-media'
+  return String(candidate).replace(/\s+/g, '_').slice(0, 120)
 }
 
 const buildPreviewImages = (detection) => {

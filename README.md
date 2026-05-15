@@ -8,8 +8,8 @@
 
 ```text
 Ending_TASK/
-├─ SOFT-rear/                 Spring Boot 后端
-├─ web/                       Vue 3 + Vite 前端
+├─ backend/                   Spring Boot 后端
+├─ frontend/                  Vue 3 + Vite 前端
 ├─ services/
 │  ├─ yolo-http/              YOLO FastAPI 服务
 │  └─ mmdet3d/                MMDet3D FastAPI 服务
@@ -41,7 +41,7 @@ Ending_TASK/
 ## 模块关系
 
 - `web` 前端通过 Vite 代理访问后端和 3D 检测服务
-- `SOFT-rear` 后端通过配置项调用 YOLO 与 MMDet3D 两个 Python 服务
+- `backend` 后端通过配置项调用 YOLO 与 MMDet3D 两个 Python 服务
 - `services/yolo-http` 负责图像目标检测
 - `services/mmdet3d` 负责 KITTI 点云 3D 检测与可视化
 
@@ -65,7 +65,7 @@ Ending_TASK/
 - Node.js 18+
 - Python 3.10/3.11：用于 `services/yolo-http`
 - Python 3.7 且可用 `torch`：用于 `services/mmdet3d`
-- MySQL：用于 `SOFT-rear`
+- MySQL：用于 `backend`
 
 ## 启动前准备
 
@@ -81,8 +81,8 @@ spring.datasource.password=***
 
 请根据本机环境修改以下文件中的数据库配置：
 
-- `SOFT-rear/src/main/resources/application.properties`
-- `SOFT-rear/src/main/resources/application-local.properties`
+- `backend/src/main/resources/application.properties`
+- `backend/src/main/resources/application-local.properties`
 
 如果不希望把本机配置提交到仓库，建议把敏感信息改用环境变量注入。
 
@@ -117,14 +117,14 @@ spring.datasource.password=***
 #### 前端
 
 ```powershell
-cd .\web
+cd .\frontend
 npm install
 ```
 
 #### 后端
 
 ```powershell
-cd .\SOFT-rear
+cd .\backend
 mvn -DskipTests package
 ```
 
@@ -198,14 +198,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\status-all.ps1
 ### 前端
 
 ```powershell
-cd .\web
+cd .\frontend
 npm run dev -- --host
 ```
 
 ### 后端
 
 ```powershell
-cd .\SOFT-rear
+cd .\backend
 mvn spring-boot:run
 ```
 
@@ -283,10 +283,18 @@ GET http://127.0.0.1:8000/health
 
 这些文件属于本地运行产物，不建议提交到 Git。
 
+## 近期更新
+
+- 前端主页恢复了大疆巡检背景，并关闭了 Vue DevTools 角标。
+- 模型对话区支持继续追问巡检建议。
+- Dify 调用已改为先返回检测结果，再异步补充 Dify 输出。
+- `media_url` 已改为短文本引用，避免触发 Dify 512 长度校验。
+- Dify 请求超时已放宽，减少本地推理等待时的超时失败。
+
 ## 注意事项
 
 - `start-all.ps1` 当前包含明显的本机路径假设，例如 JDK、Maven、KITTI 数据目录等；如果换机器运行，需要先调整脚本中的路径候选项。
-- `SOFT-rear/src/main/resources/application-local.properties` 已改成优先读取环境变量；推荐把真实本机配置写入根目录 `.env.local`，并且不要提交到公共仓库。
+- `backend/src/main/resources/application-local.properties` 已改成优先读取环境变量；推荐把真实本机配置写入根目录 `.env.local`，并且不要提交到公共仓库。
 - 仓库中的 `.env.local.example` 用于分发配置模板；实际运行请复制为 `.env.local` 后再填写你自己的本机值。
 - `services/mmdet3d/third_party/mmdetection3d` 体积较大，若后续需要精简仓库，建议改为子模块或外部依赖管理。
 
