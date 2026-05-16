@@ -2,8 +2,8 @@ package org.soft.softrear.controller;
 
 import org.soft.softrear.pojo.ResponseMessage;
 import org.soft.softrear.pojo.dto.dify.DronePipelineResult;
+import org.soft.softrear.service.agent.AgentDecisionService;
 import org.soft.softrear.service.dify.DetectionPipelineService;
-import org.soft.softrear.service.dify.DifyWorkflowService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,17 +20,22 @@ import java.util.Map;
 public class ExternalServiceController {
 
     private final DetectionPipelineService detectionPipelineService;
-    private final DifyWorkflowService difyWorkflowService;
+    private final AgentDecisionService agentDecisionService;
 
     public ExternalServiceController(DetectionPipelineService detectionPipelineService,
-                                     DifyWorkflowService difyWorkflowService) {
+                                     AgentDecisionService agentDecisionService) {
         this.detectionPipelineService = detectionPipelineService;
-        this.difyWorkflowService = difyWorkflowService;
+        this.agentDecisionService = agentDecisionService;
+    }
+
+    @GetMapping("/agent/status")
+    public ResponseMessage<Map<String, Object>> getAgentStatus() {
+        return ResponseMessage.success(agentDecisionService.probeStatus());
     }
 
     @GetMapping("/dify/status")
     public ResponseMessage<Map<String, Object>> getDifyStatus() {
-        return ResponseMessage.success(difyWorkflowService.probeStatus());
+        return getAgentStatus();
     }
 
     @PostMapping("/dify/drone-pipeline")
@@ -68,8 +73,8 @@ public class ExternalServiceController {
         }
     }
 
-    @PostMapping("/dify/chat")
-    public ResponseMessage<Map<String, Object>> chatWithDify(@RequestBody Map<String, Object> request) {
+    @PostMapping("/agent/chat")
+    public ResponseMessage<Map<String, Object>> chatWithAgent(@RequestBody Map<String, Object> request) {
         String message = String.valueOf(request.getOrDefault("message", ""));
         String userId = String.valueOf(request.getOrDefault("userId", "demo-user"));
         String mediaUrl = shortMediaRef(String.valueOf(request.getOrDefault("mediaUrl", "chat-only")));
@@ -81,9 +86,17 @@ public class ExternalServiceController {
         inputs.put("drone_id", String.valueOf(request.getOrDefault("droneId", "demo-drone-001")));
 
         Map<String, Object> response = new HashMap<>();
-        response.put("response", "Dify workflow result");
-        response.put("dify", difyWorkflowService.runWorkflow(inputs, userId));
+        response.put("response", agentDecisionService.getProviderName() + " workflow result");
+        response.put("provider", agentDecisionService.getProviderName());
+        Object decision = agentDecisionService.runDecision(inputs, userId);
+        response.put("agent", decision);
+        response.put("dify", decision);
         return ResponseMessage.success(response);
+    }
+
+    @PostMapping("/dify/chat")
+    public ResponseMessage<Map<String, Object>> chatWithDify(@RequestBody Map<String, Object> request) {
+        return chatWithAgent(request);
     }
 
     private String shortMediaRef(String value) {

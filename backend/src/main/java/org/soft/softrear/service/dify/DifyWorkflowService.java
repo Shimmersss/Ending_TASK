@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.soft.softrear.config.DifyProperties;
 import org.soft.softrear.pojo.dto.dify.DifyDecisionResult;
+import org.soft.softrear.service.agent.AgentDecisionService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -20,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class DifyWorkflowService {
+public class DifyWorkflowService implements AgentDecisionService {
 
     private final DifyProperties properties;
     private final RestTemplate restTemplate;
@@ -31,7 +32,8 @@ public class DifyWorkflowService {
         this.restTemplate = createRestTemplate();
     }
 
-    public DifyDecisionResult runWorkflow(Map<String, Object> inputs, String userSeed) {
+    @Override
+    public DifyDecisionResult runDecision(Map<String, Object> inputs, String userSeed) {
         Map<String, Object> status = probeStatus();
         if (!Boolean.TRUE.equals(status.get("ready"))) {
             return DifyDecisionResult.skipped(String.valueOf(status.getOrDefault("probeMessage", "Dify is unavailable")));
@@ -59,8 +61,10 @@ public class DifyWorkflowService {
         }
     }
 
+    @Override
     public Map<String, Object> probeStatus() {
         Map<String, Object> status = new HashMap<>();
+        status.put("provider", getProviderName());
         status.put("enabled", properties.isEnabled());
         status.put("baseUrl", properties.getBaseUrl());
         status.put("apiKeyConfigured", StringUtils.hasText(properties.getApiKey()));
@@ -104,6 +108,11 @@ public class DifyWorkflowService {
             status.put("probeMessage", readFriendlyError(e));
             return status;
         }
+    }
+
+    @Override
+    public String getProviderName() {
+        return "dify";
     }
 
     private DifyDecisionResult parseResponse(Map<String, Object> body) {

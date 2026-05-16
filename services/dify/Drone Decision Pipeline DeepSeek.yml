@@ -1,0 +1,322 @@
+app:
+  description: 无人机感知决策管线：输入检测摘要 → LLM 决策 → 安全校验
+  icon: 🛸
+  icon_background: '#E0F2FE'
+  icon_type: emoji
+  mode: workflow
+  name: Drone Decision Pipeline DeepSeek
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.15@725407927b04e236212083d20e92830d60fa944e42cd357ef6902c160414f6f1
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables:
+  - description: ''
+    id: drone_token_env
+    name: DRONE_TOKEN
+    selector:
+    - env
+    - DRONE_TOKEN
+    value: REPLACE_ME_WITH_REAL_TOKEN
+    value_type: string
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-to-decide
+      source: start_node
+      sourceHandle: source
+      target: decide_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: decide-to-validate
+      source: decide_node
+      sourceHandle: source
+      target: validate_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: end
+      id: validate-to-end
+      source: validate_node
+      sourceHandle: source
+      target: end_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 输入媒体 URL、类型、任务描述、无人机 ID
+        selected: false
+        title: Start
+        type: start
+        variables:
+        - label: media_url
+          max_length: 512
+          options: []
+          required: true
+          type: text-input
+          variable: media_url
+        - label: media_type
+          options:
+          - image
+          - pointcloud
+          required: true
+          type: select
+          variable: media_type
+        - label: mission_context
+          max_length: 512
+          options: []
+          required: false
+          type: paragraph
+          variable: mission_context
+        - label: drone_id
+          max_length: 64
+          options: []
+          required: true
+          type: text-input
+          variable: drone_id
+      height: 232
+      id: start_node
+      position:
+        x: 30
+        y: 260
+      positionAbsolute:
+        x: 30
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 根据检测摘要和任务上下文输出决策 JSON
+        memory:
+          enabled: false
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 50
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: deepseek-v4-pro
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: b91ed16e-91ae-4362-86b6-9d8067dd51ae
+          role: system
+          text: "你是无人机任务决策助手。根据检测摘要和任务上下文，输出下一步动作。\n只输出 JSON，不要任何解释或 Markdown 包裹。\n\
+            Schema:\n{\n  \"action\": \"hover | approach | retreat | return_home |\
+            \ capture | abort\",\n  \"target_xyz\": [x, y, z] 或 null,\n  \"speed_mps\"\
+            : 0 到 5 的数字,\n  \"reason\": \"简短说明\"\n}\n"
+        - id: fc73c285-92be-41d7-a146-564304977225
+          role: user
+          text: '媒体 URL：{{#start_node.media_url#}}
+
+            媒体类型：{{#start_node.media_type#}}
+
+            任务上下文：{{#start_node.mission_context#}}
+
+            无人机 ID：{{#start_node.drone_id#}}
+
+            请输出决策 JSON。
+
+            '
+        retry_config:
+          enabled: false
+          exponential_backoff:
+            enabled: false
+            max_interval: 10000
+            multiplier: 2
+          max_retries: 1
+          retry_interval: 1000
+        selected: false
+        structured_output:
+          enabled: false
+        title: Decide
+        type: llm
+        vision:
+          enabled: false
+      height: 133
+      id: decide_node
+      position:
+        x: 330
+        y: 260
+      positionAbsolute:
+        x: 330
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(decision_text: str, drone_id: str) -> dict:\n\
+          \    allowed = {\"hover\", \"approach\", \"retreat\", \"return_home\", \"\
+          capture\", \"abort\"}\n    try:\n        decision = json.loads(decision_text)\n\
+          \    except Exception as e:\n        return {\"ok\": False, \"reason\":\
+          \ f\"parse error: {e}\", \"cmd\": {}}\n\n    action = decision.get(\"action\"\
+          )\n    if action not in allowed:\n        return {\"ok\": False, \"reason\"\
+          : f\"unknown action: {action}\", \"cmd\": {}}\n\n    try:\n        speed\
+          \ = float(decision.get(\"speed_mps\") or 0)\n    except Exception:\n   \
+          \     return {\"ok\": False, \"reason\": \"invalid speed\", \"cmd\": {}}\n\
+          \    if not 0 <= speed <= 5:\n        return {\"ok\": False, \"reason\"\
+          : \"speed out of range\", \"cmd\": {}}\n\n    xyz = decision.get(\"target_xyz\"\
+          )\n    if action in {\"approach\", \"capture\"} and xyz:\n        try:\n\
+          \            x, y, z = float(xyz[0]), float(xyz[1]), float(xyz[2])\n   \
+          \     except Exception:\n            return {\"ok\": False, \"reason\":\
+          \ \"invalid xyz\", \"cmd\": {}}\n        if not (-100 <= x <= 100 and -100\
+          \ <= y <= 100 and 2 <= z <= 120):\n            return {\"ok\": False, \"\
+          reason\": \"target out of geofence\", \"cmd\": {}}\n\n    return {\n   \
+          \     \"ok\": True,\n        \"reason\": decision.get(\"reason\", \"\"),\n\
+          \        \"cmd\": {\n            \"drone_id\": drone_id,\n            \"\
+          action\": action,\n            \"target_xyz\": xyz,\n            \"speed_mps\"\
+          : speed,\n        },\n    }\n"
+        code_language: python3
+        desc: 安全校验：白名单动作、速度边界、禁飞区
+        outputs:
+          cmd:
+            children: null
+            type: object
+          ok:
+            children: null
+            type: boolean
+          reason:
+            children: null
+            type: string
+        selected: false
+        title: Validate
+        type: code
+        variables:
+        - value_selector:
+          - decide_node
+          - text
+          variable: decision_text
+        - value_selector:
+          - start_node
+          - drone_id
+          variable: drone_id
+      height: 97
+      id: validate_node
+      position:
+        x: 630
+        y: 260
+      positionAbsolute:
+        x: 630
+        y: 260
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: ''
+        outputs:
+        - value_selector:
+          - validate_node
+          - ok
+          value_type: boolean
+          variable: validated
+        - value_selector:
+          - validate_node
+          - reason
+          value_type: string
+          variable: reason
+        - value_selector:
+          - validate_node
+          - cmd
+          value_type: object
+          variable: command
+        selected: false
+        title: End
+        type: end
+      height: 141
+      id: end_node
+      position:
+        x: 930
+        y: 260
+      positionAbsolute:
+        x: 930
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 276.0662110635649
+      y: 101.73671107864675
+      zoom: 0.9524406622721904
+  rag_pipeline_variables: []

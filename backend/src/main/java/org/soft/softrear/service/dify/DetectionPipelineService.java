@@ -2,6 +2,7 @@ package org.soft.softrear.service.dify;
 
 import org.soft.softrear.pojo.dto.dify.DifyDecisionResult;
 import org.soft.softrear.pojo.dto.dify.DronePipelineResult;
+import org.soft.softrear.service.agent.AgentDecisionService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -50,7 +51,7 @@ public class DetectionPipelineService {
             "2", "Car"
     );
 
-    private final DifyWorkflowService difyWorkflowService;
+    private final AgentDecisionService agentDecisionService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${detection.yolo-base-url:http://127.0.0.1:9000}")
@@ -62,8 +63,8 @@ public class DetectionPipelineService {
     @Value("${detection.kitti-dataset-root:}")
     private String kittiDatasetRoot;
 
-    public DetectionPipelineService(DifyWorkflowService difyWorkflowService) {
-        this.difyWorkflowService = difyWorkflowService;
+    public DetectionPipelineService(AgentDecisionService agentDecisionService) {
+        this.agentDecisionService = agentDecisionService;
     }
 
     public DronePipelineResult run(String mediaType,
@@ -103,9 +104,9 @@ public class DetectionPipelineService {
             );
         }
 
-        Map<String, Object> difyStatus = difyWorkflowService.probeStatus();
+        Map<String, Object> difyStatus = agentDecisionService.probeStatus();
         DifyDecisionResult dify = Boolean.TRUE.equals(difyStatus.get("ready"))
-                ? difyWorkflowService.runWorkflow(
+                ? agentDecisionService.runDecision(
                         buildDifyInputs(normalizedType, file, detection, missionContext, droneId),
                         StringUtils.hasText(droneId) ? droneId : "demo-drone-001"
                 )
